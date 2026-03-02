@@ -27,7 +27,7 @@ SELECT point_ts, league, currency, entity_id, rate, volume, image, entity_name
 FROM ${fq}.gold_exchange_latest_rate
 ${where}
 ORDER BY point_ts DESC
-LIMIT ${112}
+LIMIT ${limit}
 `.trim();
 }
 
@@ -46,17 +46,20 @@ function topMoversSql({
   if (asset_type) where += ` AND asset_type = '${esc(asset_type)}'`;
   if (currency) where += ` AND currency = '${esc(currency)}'`;
 
-  const orderBy =
-    order === "abs"
-      ? "ORDER BY abs_change DESC NULLS LAST"
-      : "ORDER BY pct_change DESC NULLS LAST";
+  let orderBy;
+
+  if (order === "asc") {
+    orderBy = "ORDER BY pct_change ASC NULLS LAST";
+  } else {
+    orderBy = "ORDER BY pct_change DESC NULLS LAST";
+  }
 
   return `
-SELECT ts, league, asset_type, entity_id, currency, latest_rate, rate_24h, latest_volume, abs_change, pct_change
+SELECT ts, league, asset_type, entity_id, currency, latest_rate, rate_24h, latest_volume, abs_change, pct_change, image, entity_name
 FROM ${fq}.gold_exchange_top_movers
 ${where}
 ${orderBy}
-LIMIT ${10}
+LIMIT ${limit}
 `.trim();
 }
 
