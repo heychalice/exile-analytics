@@ -27,7 +27,7 @@ SELECT point_ts, league, currency, entity_id, rate, volume
 FROM ${fq}.gold_exchange_latest_rate
 ${where}
 ORDER BY point_ts DESC
-LIMIT ${num(limit, 500)}
+LIMIT ${112}
 `.trim();
 }
 
@@ -56,7 +56,7 @@ SELECT ts, league, asset_type, entity_id, currency, latest_rate, rate_24h, lates
 FROM ${fq}.gold_exchange_top_movers
 ${where}
 ${orderBy}
-LIMIT ${num(limit, 50)}
+LIMIT ${10}
 `.trim();
 }
 
