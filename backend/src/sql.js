@@ -23,7 +23,7 @@ function latestRateSql({
   if (entity_id) where += ` AND entity_id = '${esc(entity_id)}'`;
 
   return `
-SELECT point_ts, league, currency, entity_id, rate, volume
+SELECT point_ts, league, currency, entity_id, rate, volume, image, entity_name
 FROM ${fq}.gold_exchange_latest_rate
 ${where}
 ORDER BY point_ts DESC
