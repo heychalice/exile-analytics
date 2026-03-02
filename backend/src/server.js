@@ -9,6 +9,10 @@ app.use(express.json());
 
 const { DATABRICKS_SCHEMA = "poe" } = process.env;
 
+app.get("/health", (req, res) => {
+  res.status(200).send("ok");
+});
+
 app.get("/api/latest-rate", async (req, res) => {
   try {
     const { league, currency, entity_id, limit } = req.query;
