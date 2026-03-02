@@ -9,6 +9,7 @@ export default function App() {
   const [topMovers, setTopMovers] = useState([]);
   const [topLosers, setTopLosers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [assetType, setAssetType] = useState("Currency");
 
   useEffect(() => {
     async function fetchData() {
@@ -16,22 +17,30 @@ export default function App() {
       try {
         // Fetch latest rates
         const latestRes = await fetch(
-          `${API_BASE}/api/latest-rate?league=${encodeURIComponent(league)}&limit=250`,
+          `${API_BASE}/api/latest-rate?league=${encodeURIComponent(league)}&limit=250&asset_type=${assetType}`,
         );
         const latestData = await latestRes.json();
 
         // Group latest rates by entity
         const groupedRates = groupByEntity(latestData.rows || []);
 
-        // Sort by highest divine rate (descending)
+        // Sort by highest chaos rate (descending), ignoring items with 0 volume
         groupedRates.sort((a, b) => {
-          const rateA = a.divine?.rate || 0;
-          const rateB = b.divine?.rate || 0;
+          const rateA = a.chaos?.rate || 0;
+          const rateB = b.chaos?.rate || 0;
 
-          if (rateB !== rateA) {
-            return rateB - rateA; // Highest rate first
-          }
-          // Fallback to alphabetical if rates are the same (or both missing)
+          const volA = a.chaos?.volume || 0;
+          const volB = b.chaos?.volume || 0;
+
+          // Items with 0 volume go to the bottom
+          // if (volA === 0 && volB !== 0) return 1;
+          // if (volB === 0 && volA !== 0) return -1;
+          // if (volA === 0 && volB === 0) return 0;
+
+          // Sort by chaos ask descending
+          if (rateB !== rateA) return rateB - rateA;
+
+          // Fallback: alphabetical
           return a.name.localeCompare(b.name);
         });
 
@@ -39,14 +48,14 @@ export default function App() {
 
         // Top 10 Movers
         const moversRes = await fetch(
-          `${API_BASE}/api/top-movers?league=${encodeURIComponent(league)}&limit=10&order=desc&currency=divine`,
+          `${API_BASE}/api/top-movers?league=${encodeURIComponent(league)}&limit=10&order=desc&currency=divine&asset_type=${assetType}`,
         );
         const moversData = await moversRes.json();
         setTopMovers(moversData.rows.slice(0, 10).map(normalizeItem));
 
         // Top 10 Losers
         const losersRes = await fetch(
-          `${API_BASE}/api/top-movers?league=${encodeURIComponent(league)}&limit=10&order=asc&currency=divine`,
+          `${API_BASE}/api/top-movers?league=${encodeURIComponent(league)}&limit=10&order=asc&currency=divine&asset_type=${assetType}`,
         );
         const losersData = await losersRes.json();
         setTopLosers(losersData.rows.slice(0, 10).map(normalizeItem));
@@ -57,9 +66,24 @@ export default function App() {
       }
     }
     fetchData();
-  }, []);
+  }, [assetType]);
 
-  if (loading) return <div className="container">Loading...</div>;
+  if (loading)
+    return (
+      <div
+        className="container"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          width: "100vw",
+          textAlign: "center",
+        }}
+      >
+        Loading...
+      </div>
+    );
 
   // Find the Divine Orb to get the current Chaos conversion rate
   const divineItem = latestRates.find(
@@ -84,7 +108,9 @@ export default function App() {
             marginBottom: "1rem",
           }}
         >
-          <h2 style={{ margin: 0 }}>{league} Latest Rates</h2>
+          <h2 style={{ margin: 0 }}>
+            {league} {assetType} Latest Rates
+          </h2>
 
           {divineToChaosRate && (
             <div
@@ -122,7 +148,33 @@ export default function App() {
       </main>
 
       <aside className="sidebar">
-        <h2>Top Winners & Losers (Divine)</h2>
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            marginBottom: "1rem",
+          }}
+        >
+          {["Currency", "Fragment"].map((type) => (
+            <button
+              key={type}
+              onClick={() => setAssetType(type)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "6px",
+                border:
+                  assetType === type ? "2px solid #00ffcc" : "1px solid #555",
+                backgroundColor: assetType === type ? "#222" : "#1e1e1e",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: assetType === type ? "bold" : "normal",
+              }}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+        <h2>Top Winners & Losers (Ask Divine)</h2>
         <div className="top-lists">
           <div className="list">
             <h3>Winners</h3>
