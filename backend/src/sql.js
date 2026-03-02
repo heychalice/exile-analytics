@@ -14,13 +14,14 @@ function latestRateSql({
   league,
   currency,
   entity_id,
+  asset_type,
   limit,
 }) {
   const fq = fqSchema({ catalog, schema });
   if (!league) throw new Error("league is required");
   let where = `WHERE league = '${esc(league)}'`;
   if (currency) where += ` AND currency = '${esc(currency)}'`;
-  if (entity_id) where += ` AND entity_id = '${esc(entity_id)}'`;
+  if (asset_type) where += ` AND asset_type = '${esc(asset_type)}'`;
 
   return `
 SELECT point_ts, league, currency, entity_id, rate, volume, image, entity_name

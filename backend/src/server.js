@@ -15,12 +15,12 @@ app.get("/health", (req, res) => {
 
 app.get("/api/latest-rate", async (req, res) => {
   try {
-    const { league, currency, entity_id, limit } = req.query;
+    const { league, currency, asset_type, limit } = req.query;
     const sql = latestRateSql({
       schema: DATABRICKS_SCHEMA,
       league,
       currency,
-      entity_id,
+      asset_type,
       limit,
     });
     const out = await query(sql);
