@@ -209,14 +209,18 @@ function ItemCard({ item }) {
       <div className="rates-table">
         <div className="rate-row header">
           <div>Asset</div>
-          <div>Rate</div>
+          <div>Ask</div>
           <div>Volume</div>
         </div>
-        {["chaos", "divine"].map((currency) => (
+        {["divine", "chaos"].map((currency) => (
           <div key={currency} className="rate-row">
-            <div>{currency}</div>
+            <div>{currency.charAt(0).toUpperCase() + currency.slice(1)}</div>
             <div>{item[currency]?.rate ?? "-"}</div>
-            <div>{item[currency]?.volume ?? "-"}</div>
+            <div>
+              {(item[currency]?.volume == 0 ?? "-")
+                ? "-"
+                : item[currency]?.volume}
+            </div>
           </div>
         ))}
       </div>
