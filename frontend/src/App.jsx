@@ -155,7 +155,7 @@ export default function App() {
             marginBottom: "1rem",
           }}
         >
-          {["Currency", "Fragment"].map((type) => (
+          {["Currency", "Fragment", "Fossil", "DivinationCard"].map((type) => (
             <button
               key={type}
               onClick={() => setAssetType(type)}
@@ -174,7 +174,7 @@ export default function App() {
             </button>
           ))}
         </div>
-        <h2>Top Winners & Losers (Ask Divine)</h2>
+        <h2>Top Winners & Losers (Ask Divine 24h)</h2>
         <div className="top-lists">
           <div className="list">
             <h3>Winners</h3>
@@ -201,10 +201,13 @@ export default function App() {
 // ----------------------------
 
 // Helper to override image for Scouting Reports
-function getImagePath(name, originalImage) {
+function getImagePath(name, originalImage, asset_type) {
   if (name && name.toLowerCase().includes("scouting report")) {
     // Return relative path since components prepend the CDN domain
     return "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2NvdXRpbmdSZXBvcnQiLCJ3IjoxLCJoIjoxLCJzY2FsZSI6MX1d/584635f3c8/ScoutingReport.png";
+  }
+  if (asset_type === "DivinationCard") {
+    return "/image/Art/2DItems/Divination/InventoryIcon.png?scale=1&w=1&h=1";
   }
   return originalImage || "";
 }
@@ -219,7 +222,7 @@ function groupByEntity(rows) {
       grouped[id] = {
         entity_id: id,
         name: name,
-        image: getImagePath(name, item.image),
+        image: getImagePath(name, item.image, item.asset_type), // pass asset_type
       };
     }
     grouped[id][item.currency] = {
@@ -236,7 +239,7 @@ function normalizeItem(item) {
   return {
     ...item,
     name: name,
-    image: getImagePath(name, item.image),
+    image: getImagePath(name, item.image, item.asset_type), // pass asset_type
   };
 }
 
