@@ -217,9 +217,7 @@ function ItemCard({ item }) {
             <div>{currency.charAt(0).toUpperCase() + currency.slice(1)}</div>
             <div>{item[currency]?.rate ?? "-"}</div>
             <div>
-              {(item[currency]?.volume == 0 ?? "-")
-                ? "-"
-                : item[currency]?.volume}
+              {item[currency]?.volume == 0 ? "-" : item[currency]?.volume}
             </div>
           </div>
         ))}
