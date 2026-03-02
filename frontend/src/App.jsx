@@ -4,7 +4,7 @@ import "./App.css";
 const API_BASE = "http://localhost:8080";
 const league = "Keepers";
 
-function App() {
+export default function App() {
   const [latestRates, setLatestRates] = useState([]);
   const [topMovers, setTopMovers] = useState([]);
   const [topLosers, setTopLosers] = useState([]);
@@ -14,37 +14,39 @@ function App() {
     async function fetchData() {
       setLoading(true);
       try {
-        // Latest Rates
+        // Fetch latest rates
         const latestRes = await fetch(
-          `${API_BASE}/api/latest-rate?league=${encodeURIComponent(league)}&limit=50`,
+          `${API_BASE}/api/latest-rate?league=${encodeURIComponent(
+            league,
+          )}&limit=113`,
         );
         const latestData = await latestRes.json();
+        // Group latest rates by entity
         setLatestRates(groupByEntity(latestData.rows || []));
 
-        // Top 10 Movers (gainers)
+        // Top 10 Movers
         const moversRes = await fetch(
           `${API_BASE}/api/top-movers?league=${encodeURIComponent(
             league,
-          )}&limit=10&order=desc`,
+          )}&limit=10&order=desc&currency=divine`,
         );
         const moversData = await moversRes.json();
-        setTopMovers(moversData.rows || []);
+        setTopMovers(moversData.rows.slice(0, 10).map(normalizeItem));
 
         // Top 10 Losers
         const losersRes = await fetch(
           `${API_BASE}/api/top-movers?league=${encodeURIComponent(
             league,
-          )}&limit=10&order=asc`,
+          )}&limit=10&order=asc&currency=divine`,
         );
         const losersData = await losersRes.json();
-        setTopLosers(losersData.rows || []);
+        setTopLosers(losersData.rows.slice(0, 10).map(normalizeItem));
       } catch (err) {
         console.error("API error:", err);
       } finally {
         setLoading(false);
       }
     }
-
     fetchData();
   }, []);
 
@@ -53,61 +55,91 @@ function App() {
   return (
     <div className="container dashboard">
       <main className="main">
-        <h1>Latest Rates - {league}</h1>
+        <h2>{league} Latest Rates</h2>
         <div className="grid">
           {latestRates.map((item) => (
             <ItemCard key={item.entity_id} item={item} />
           ))}
         </div>
       </main>
-
       <aside className="sidebar">
-        <h2>Top 10 Movers</h2>
-        {topMovers.map((item) => (
-          <MoverCard key={item.entity_id} item={item} />
-        ))}
-
-        <h2>Top 10 Losers</h2>
-        {topLosers.map((item) => (
-          <MoverCard key={item.entity_id} item={item} negative />
-        ))}
+        <h2>Top Winners & Losers (Divine)</h2>
+        <div className="top-lists">
+          <div className="list">
+            <h3>Winners</h3>
+            {topMovers.map((item) => (
+              <MoverCard key={item.entity_id} item={item} />
+            ))}
+          </div>
+          <div className="list">
+            <h3>Losers</h3>
+            {topLosers.map((item) => (
+              <MoverCard key={item.entity_id} item={item} negative />
+            ))}
+          </div>
+        </div>
       </aside>
     </div>
   );
 }
 
-// Group latest rates by entity_id and separate chaos/divine
+// ----------------------------
+// Helpers
+// ----------------------------
+
+// Group latest rates by entity
 function groupByEntity(rows) {
   const grouped = {};
   rows.forEach((item) => {
     const id = item.entity_id;
-    if (!grouped[id]) grouped[id] = { entity_id: id, name: id };
+    if (!grouped[id]) {
+      grouped[id] = {
+        entity_id: id,
+        name: item.entity_name || id,
+        image: item.image || "",
+      };
+    }
     grouped[id][item.currency] = {
       rate: item.rate,
       volume: item.volume,
-      point_ts: item.point_ts,
     };
-    grouped[id].image_url = item.image_url || grouped[id].image_url;
   });
   return Object.values(grouped);
 }
 
-// Card for each item in latest rates
+// Normalize movers/losers items to ensure consistent fields
+function normalizeItem(item) {
+  return {
+    ...item,
+    name: item.entity_name || item.name || item.entity_id,
+    image: item.image || "",
+  };
+}
+
+// ----------------------------
+// Components
+// ----------------------------
+
+// Latest Rates Card
 function ItemCard({ item }) {
   return (
     <div className="card">
-      {item.image_url && (
-        <img src={item.image_url} alt={item.entity_id} className="card-image" />
-      )}
-      <h3>{item.name || item.entity_id}</h3>
-
+      <div className="card-header">
+        {item.image && (
+          <img
+            src={`https://web.poecdn.com${item.image}`}
+            className="card-image"
+            alt={item.name}
+          />
+        )}
+        <h3>{item.name}</h3>
+      </div>
       <div className="rates-table">
         <div className="rate-row header">
-          <div>Currency</div>
+          <div>Asset</div>
           <div>Rate</div>
           <div>Volume</div>
         </div>
-
         {["chaos", "divine"].map((currency) => (
           <div key={currency} className="rate-row">
             <div>{currency}</div>
@@ -120,23 +152,21 @@ function ItemCard({ item }) {
   );
 }
 
-// Card for each top mover/loser
+// Top Movers / Losers Card
 function MoverCard({ item, negative }) {
   return (
     <div className="mover-card">
-      {item.image_url && (
+      {item.image && (
         <img
-          src={item.image_url}
-          alt={item.entity_id}
+          src={`https://web.poecdn.com${item.image}`}
+          alt={item.name}
           className="mover-image"
         />
       )}
-      <div className="mover-name">{item.entity_id}</div>
+      <div className="mover-name">{item.name}</div>
       <div className={`mover-change ${negative ? "negative" : ""}`}>
-        {item.change_percent?.toFixed(2) ?? "-"}%
+        {(item.pct_change * 100).toFixed(2)}%
       </div>
     </div>
   );
 }
-
-export default App;
