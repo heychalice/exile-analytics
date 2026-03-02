@@ -16,28 +16,37 @@ export default function App() {
       try {
         // Fetch latest rates
         const latestRes = await fetch(
-          `${API_BASE}/api/latest-rate?league=${encodeURIComponent(
-            league,
-          )}&limit=113`,
+          `${API_BASE}/api/latest-rate?league=${encodeURIComponent(league)}&limit=250`,
         );
         const latestData = await latestRes.json();
+
         // Group latest rates by entity
-        setLatestRates(groupByEntity(latestData.rows || []));
+        const groupedRates = groupByEntity(latestData.rows || []);
+
+        // Sort by highest divine rate (descending)
+        groupedRates.sort((a, b) => {
+          const rateA = a.divine?.rate || 0;
+          const rateB = b.divine?.rate || 0;
+
+          if (rateB !== rateA) {
+            return rateB - rateA; // Highest rate first
+          }
+          // Fallback to alphabetical if rates are the same (or both missing)
+          return a.name.localeCompare(b.name);
+        });
+
+        setLatestRates(groupedRates);
 
         // Top 10 Movers
         const moversRes = await fetch(
-          `${API_BASE}/api/top-movers?league=${encodeURIComponent(
-            league,
-          )}&limit=10&order=desc&currency=divine`,
+          `${API_BASE}/api/top-movers?league=${encodeURIComponent(league)}&limit=10&order=desc&currency=divine`,
         );
         const moversData = await moversRes.json();
         setTopMovers(moversData.rows.slice(0, 10).map(normalizeItem));
 
         // Top 10 Losers
         const losersRes = await fetch(
-          `${API_BASE}/api/top-movers?league=${encodeURIComponent(
-            league,
-          )}&limit=10&order=asc&currency=divine`,
+          `${API_BASE}/api/top-movers?league=${encodeURIComponent(league)}&limit=10&order=asc&currency=divine`,
         );
         const losersData = await losersRes.json();
         setTopLosers(losersData.rows.slice(0, 10).map(normalizeItem));
@@ -52,16 +61,66 @@ export default function App() {
 
   if (loading) return <div className="container">Loading...</div>;
 
+  // Find the Divine Orb to get the current Chaos conversion rate
+  const divineItem = latestRates.find(
+    (item) =>
+      item.entity_id === "divine" || item.name?.toLowerCase() === "divine orb",
+  );
+  const chaosItem = latestRates.find(
+    (item) =>
+      item.entity_id === "chaos" || item.name?.toLowerCase() === "chaos orb",
+  );
+  const divineToChaosRate = divineItem?.chaos?.rate;
+
   return (
     <div className="container dashboard">
       <main className="main">
-        <h2>{league} Latest Rates</h2>
+        {/* Header Row with Divine Conversion */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: "1rem",
+          }}
+        >
+          <h2 style={{ margin: 0 }}>{league} Latest Rates</h2>
+
+          {divineToChaosRate && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "1.25rem",
+                fontWeight: "bold",
+                backgroundColor: "#1e1e1e",
+                padding: "8px 16px",
+                borderRadius: "8px",
+              }}
+            >
+              <img
+                src={`https://web.poecdn.com${divineItem.image}`}
+                alt="Divine Orb"
+                style={{ width: "32px", height: "32px" }}
+              />
+              <span>1 = {divineToChaosRate}</span>
+              <img
+                src={`https://web.poecdn.com${chaosItem.image}`}
+                alt="Chaos Orb"
+                style={{ width: "32px", height: "32px" }}
+              />
+            </div>
+          )}
+        </div>
+
         <div className="grid">
           {latestRates.map((item) => (
             <ItemCard key={item.entity_id} item={item} />
           ))}
         </div>
       </main>
+
       <aside className="sidebar">
         <h2>Top Winners & Losers (Divine)</h2>
         <div className="top-lists">
@@ -83,9 +142,20 @@ export default function App() {
   );
 }
 
+// ... (Keep your existing Helpers and Components below here)
+
 // ----------------------------
 // Helpers
 // ----------------------------
+
+// Helper to override image for Scouting Reports
+function getImagePath(name, originalImage) {
+  if (name && name.toLowerCase().includes("scouting report")) {
+    // Return relative path since components prepend the CDN domain
+    return "/gen/image/WzI1LDE0LHsiZiI6IjJESXRlbXMvQ3VycmVuY3kvU2NvdXRpbmdSZXBvcnQiLCJ3IjoxLCJoIjoxLCJzY2FsZSI6MX1d/584635f3c8/ScoutingReport.png";
+  }
+  return originalImage || "";
+}
 
 // Group latest rates by entity
 function groupByEntity(rows) {
@@ -93,10 +163,11 @@ function groupByEntity(rows) {
   rows.forEach((item) => {
     const id = item.entity_id;
     if (!grouped[id]) {
+      const name = item.entity_name || id;
       grouped[id] = {
         entity_id: id,
-        name: item.entity_name || id,
-        image: item.image || "",
+        name: name,
+        image: getImagePath(name, item.image),
       };
     }
     grouped[id][item.currency] = {
@@ -109,10 +180,11 @@ function groupByEntity(rows) {
 
 // Normalize movers/losers items to ensure consistent fields
 function normalizeItem(item) {
+  const name = item.entity_name || item.name || item.entity_id;
   return {
     ...item,
-    name: item.entity_name || item.name || item.entity_id,
-    image: item.image || "",
+    name: name,
+    image: getImagePath(name, item.image),
   };
 }
 
