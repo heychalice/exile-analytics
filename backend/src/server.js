@@ -6,7 +6,7 @@ const { latestRateSql, topMoversSql } = require("./sql.js");
 const app = express();
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://exile-analytics.vercel.app/"],
+    origin: ["http://localhost:5173", "https://exile-analytics.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),

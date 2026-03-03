@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API_BASE = "https://exile-analytics-api.vercel.app/";
+const API_BASE = "https://exile-analytics-api.vercel.app";
 const league = "Keepers";
 const CACHE_TTL_MS = 120 * 60 * 1000;
 
