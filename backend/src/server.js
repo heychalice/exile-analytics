@@ -4,7 +4,13 @@ const { query } = require("./databricks.js");
 const { latestRateSql, topMoversSql } = require("./sql.js");
 
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://exile-analytics.vercel.app/"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 
 const { DATABRICKS_SCHEMA = "poe" } = process.env;
