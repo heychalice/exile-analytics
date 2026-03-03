@@ -1,8 +1,4 @@
 const esc = (s) => String(s).replaceAll("'", "''");
-const num = (x, fallback) => {
-  const n = Number(x);
-  return Number.isFinite(n) ? n : fallback;
-};
 
 function fqSchema({ catalog, schema }) {
   return catalog ? `${catalog}.${schema}` : schema;
@@ -13,7 +9,6 @@ function latestRateSql({
   schema,
   league,
   currency,
-  entity_id,
   asset_type,
   limit,
 }) {
@@ -56,7 +51,7 @@ function topMoversSql({
   }
 
   return `
-SELECT ts, league, asset_type, entity_id, currency, latest_rate, rate_24h, latest_volume, abs_change, pct_change, image, entity_name
+SELECT ts, league, asset_type, entity_id, currency, min_rate_7d, max_rate_7d, avg_rate_7d, abs_change, pct_change, image, entity_name, avg_volume_7d, rate_7d_latest, rate_7d_earliest, daily_rates_7d
 FROM ${fq}.gold_exchange_top_movers
 ${where}
 ${orderBy}
