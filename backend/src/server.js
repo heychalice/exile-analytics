@@ -50,6 +50,8 @@ app.get("/api/top-movers", async (req, res) => {
   }
 });
 
-app.listen(8080, () => {
-  console.log("Backend running at http://localhost:8080");
-});
+if (process.env.NODE_ENV !== "production") {
+  app.listen(8080, () => console.log("Server running on port 8080"));
+}
+
+module.exports = app;
