@@ -1,5 +1,4 @@
 version: "3.9"
-
 services:
   backend:
     build: ./backend
@@ -7,8 +6,15 @@ services:
       - "8080:8080"
     env_file:
       - ./backend/.env
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
 
   frontend:
     build: ./frontend
     ports:
       - "3000:80"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
