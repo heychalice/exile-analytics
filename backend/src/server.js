@@ -9,7 +9,7 @@ app.use(express.json());
 
 const { DATABRICKS_SCHEMA = "poe" } = process.env;
 
-app.get("/health", (req, res) => {
+app.get("/", (req, res) => {
   res.status(200).send("ok");
 });
 
